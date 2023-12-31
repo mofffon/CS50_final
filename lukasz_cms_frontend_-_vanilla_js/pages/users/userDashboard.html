@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+      integrity="sha384-rbsA2VBKQhggwzxH7pPCaAqO46MgnOM80zW1RWuH61DGLwZJEdK2Kadq2F9CUG65"
+      crossorigin="anonymous"
+    />
+    <title>Document</title>
+  </head>
+  <body>
+    <div class="container">
+      <h1>Add Article</h1>
+      <nav class="navbar navbar-expand-lg navbar-light bg-light sticky-top">
+        <div class="container-fluid">
+          <a class="navbar-brand" href="#">Navbar</a>
+          <button
+            class="navbar-toggler"
+            type="button"
+            data-bs-toggle="collapse"
+            data-bs-target="#navbarNavAltMarkup"
+            aria-controls="navbarNavAltMarkup"
+            aria-expanded="false"
+            aria-label="Toggle navigation"
+          >
+            <span class="navbar-toggler-icon"></span>
+          </button>
+          <div class="collapse navbar-collapse" id="navbarNavAltMarkup">
+            <div class="navbar-nav">
+              <a
+                class="nav-link active"
+                aria-current="page"
+                href="./userDashboard.html"
+                id="addArticle"
+                >Add Article</a
+              >
+              <a
+                class="nav-link"
+                href="./userArticleUpdate.html"
+                id="updateArticle"
+                >Update Article</a
+              >
+              <a
+                class="nav-link"
+                href="./userDeleteArticle.html"
+                id="deleteArticle"
+                >Delete Article</a
+              >
+              <a class="nav-link" href="#" id="userLogout">User Logout</a>
+            </div>
+          </div>
+        </div>
+      </nav>
+
+      <form>
+        <div class="mb-3">
+          <label for="title" class="form-label">Title</label>
+          <input
+            class="form-control w-75"
+            id="title"
+            name="title"
+            type="text"
+          />
+        </div>
+        <label for="category" class="form-label">Category</label>
+        <input
+          class="form-control w-75"
+          id="category"
+          name="category"
+          type="category"
+        />
+        <div class="mb-3">
+          <label for="content" class="form-label">Content</label>
+          <textarea
+            style="height: 300px"
+            class="form-control w-75"
+            id="content"
+            name="content"
+            type="textArea"
+          ></textarea>
+        </div>
+        <button type="submit" class="btn btn-primary" id="publish">
+          Publish
+        </button>
+      </form>
+
+      <div id="result"></div>
+
+      <script
+        src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-kenU1KFdBIe4zVF0s0G1M5b4hcpxyD9F7jL+jjXkk+Q2h455rYXK/7HAuoJl+0I4"
+        crossorigin="anonymous"
+      ></script>
+      <script type="module">
+        import config from "./../../javascript/config.json" assert { type: "json" };
+      </script>
+    </div>
+    <script
+      src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"
+      integrity="sha384-kenU1KFdBIe4zVF0s0G1M5b4hcpxyD9F7jL+jjXkk+Q2h455rYXK/7HAuoJl+0I4"
+      crossorigin="anonymous"
+    ></script>
+    <script type="module">
+      "use strict";
+      import config from "./../../javascript/config.json" assert { type: "json" };
+
+      if (!sessionStorage.getItem("x-auth-token")) {
+        window.location.replace("./../../index.html");
+      }
+
+      document.querySelector("#userLogout").addEventListener(
+        "click",
+        function () {
+          sessionStorage.removeItem("x-auth-token");
+          window.location.replace("./../../index.html");
+        },
+        false
+      );
+
+      document.querySelector("#publish").addEventListener(
+        "click",
+        async (event) => {
+          const title = document.querySelector("#title").value;
+          const content = document.querySelector("#content").value;
+          const category = document.querySelector("#category").value;
+
+          event.preventDefault();
+          const contentArray = createContentArray(content);
+
+          await publish(title, category, contentArray);
+        },
+        false
+      );
+
+      const createContentArray = (content) => {
+        let retArray = content.split(/\r?\n\n/);
+
+        return retArray;
+      };
+
+      const publish = async (title, category, content) => {
+        const url = config.host + "/api/articles/new";
+
+        let result;
+        try {
+          result = await fetch(url, {
+            method: "post",
+            headers: {
+              "Content-Type": "application/json",
+              "x-auth-token": sessionStorage.getItem("x-auth-token"),
+            },
+
+            body: JSON.stringify({
+              title,
+              category,
+              content,
+            }),
+          });
+        } catch (error) {
+          console.log(error);
+          document.querySelector("#result").innerHTML =
+            "Something went wrong. We are working on it.";
+          return;
+        }
+
+        if (result.status < 200 || result.status > 299) {
+          const textResult = await result.text();
+          document.querySelector("#result").innerHTML = textResult;
+        } else {
+          document.querySelector("#result").innerHTML = "Publish successful.";
+          document.querySelector("#title").value = "";
+          document.querySelector("#content").value = "";
+          document.querySelector("#category").value = "";
+        }
+      };
+    </script>
+  </body>
+</html>
